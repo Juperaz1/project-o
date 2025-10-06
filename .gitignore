@@ -1,0 +1,4 @@
+echo "build/" > .gitignore
+echo "*.o" >> .gitignore
+echo "*.exe" >> .gitignore
+echo "*.out" >> .gitignore
