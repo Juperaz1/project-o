@@ -119,5 +119,53 @@ void GrapheOrienté::calculerDates() {
     }
 
     std::cout << "-------------------------------------------------------\n";
-    std::cout << "Durée minimale du projet : " << fin_projet << " jours\n";
+    
+    /* Chemin critique */
+    std::vector<int> cheminCritique;
+    for(auto& [id, t] : taches)
+    {
+        t.marge = t.debut_tard - t.debut_tot;
+        t.critique = (t.marge == 0);
+        if(t.critique)
+        {
+            cheminCritique.push_back(id);
+        }
+    }
+    std::reverse(cheminCritique.begin(), cheminCritique.end());
+    std::cout << "Chemin critique : ";
+    for(size_t i = 0; i < cheminCritique.size(); ++i)
+    {
+        if(i > 0) 
+        {
+            std::cout << " -> ";
+        }
+        std::cout << cheminCritique[i];
+    }
+    std::cout << std::endl;
+
+    /* Tâches pouvant être retardées */
+    std::vector<int> Marge;
+    for(auto& [id, t] : taches)
+    {
+        t.marge = t.debut_tard - t.debut_tot;
+        if(t.marge != 0)
+        {
+            Marge.push_back(id);
+        }
+    }
+    std::reverse(Marge.begin(), Marge.end());
+    std::cout << "Tâche avec marge : ";
+    for(size_t i = 0; i < Marge.size(); ++i)
+    {
+        int id = Marge[i];
+        auto& t = taches[id];
+        std::cout << id << "(" << t.marge << "j)";
+        if(i < Marge.size() - 1)
+        {
+            std::cout << "; ";
+        }
+    }
+    std::cout << std::endl;
+    
+    std::cout << "\nDurée minimale du projet : " << fin_projet << " jours\n";
 }
