@@ -13,7 +13,11 @@ void GrapheOrienté::ajouterArc(int source, int destination) {
 // --- Affichage simple du graphe ---
 void GrapheOrienté::afficher() const {
     std::cout << "\n=== Graphe des dépendances ===\n";
-    for (const auto& [id, t] : taches) {
+
+    for (const std::pair<const int, Tache>& element : taches) { 
+        int id = element.first;
+        const Tache& t = element.second;
+
         std::cout << "Tâche " << id << " (" << t.nom << ", " << t.duree << "j) dépend de : ";
         for (int d : t.dependances)
             std::cout << d << " ";
@@ -21,23 +25,34 @@ void GrapheOrienté::afficher() const {
     }
 }
 
-// --- Détection de cycle (DFS) ---
-bool GrapheOrienté::dfsDetectCycle(int id, std::unordered_map<int, int>& etat) const {
-    etat[id] = 1; // en cours
-    for (int dep : taches.at(id).dependances) {
-        if (etat[dep] == 1) return true; // cycle
-        if (etat[dep] == 0 && dfsDetectCycle(dep, etat)) return true;
+// --- Détection de cycle ---
+bool GrapheOrienté::DetectCycle(int id, std::unordered_map<int, int>& etat) const {
+    etat[id] = 1; // tâche en cours de visite
+
+    const std::vector<int>& dependances = taches.at(id).dependances;
+    for (int dep : dependances) { // Parcours des dépendances
+        if (etat[dep] == 1) return true; // cycle détecté
+        if (etat[dep] == 0 && DetectCycle(dep, etat)) return true; // appel récursif
     }
-    etat[id] = 2;
+
+    etat[id] = 2; // tâche terminée
     return false;
 }
 
 bool GrapheOrienté::estRealisable() const {
     std::unordered_map<int, int> etat;
-    for (const auto& [id, _] : taches) etat[id] = 0;
-    for (const auto& [id, _] : taches)
-        if (etat[id] == 0 && dfsDetectCycle(id, etat))
+
+    for (const std::pair<const int, Tache>& element : taches) {
+        int id = element.first;
+        etat[id] = 0;
+    }
+
+    for (const std::pair<const int, Tache>& element : taches) {
+        int id = element.first;
+        if (etat[id] == 0 && DetectCycle(id, etat))
             return false;
+    }
+
     return true;
 }
 
@@ -52,9 +67,16 @@ int GrapheOrienté::maxFinPrecedentes(const std::vector<int>& deps) const {
 // --- Calcul du min des débuts suivantes ---
 int GrapheOrienté::minDebutSuivantes(int id) const {
     int min_debut = INT_MAX;
-    for (const auto& [k, t] : taches)
-        if (std::find(t.dependances.begin(), t.dependances.end(), id) != t.dependances.end())
+
+    for (const std::pair<const int, Tache>& element : taches) {
+        const int k = element.first;
+        const Tache& t = element.second;
+
+        if (std::find(t.dependances.begin(), t.dependances.end(), id) != t.dependances.end()) {
             min_debut = std::min(min_debut, t.debut_tard);
+        }
+    }
+
     return (min_debut == INT_MAX) ? taches.at(id).fin_tot : min_debut;
 }
 
@@ -68,7 +90,10 @@ void GrapheOrienté::calculerDates() {
 
     // Tri topologique simple (manuel ici)
     std::vector<int> ordre;
-    for (const auto& [id, _] : taches) ordre.push_back(id);
+    for (const std::pair<const int, Tache>& element : taches) {
+        int id = element.first;
+        ordre.push_back(id);
+    }
     std::sort(ordre.begin(), ordre.end());
 
     // --- Calcul des dates au plus tôt ---
@@ -91,7 +116,7 @@ void GrapheOrienté::calculerDates() {
     }
 
     // --- Calcul des dates au plus tard (retour en arrière) ---
-    for (auto it = ordre.rbegin(); it != ordre.rend(); ++it) {
+    for (std::vector<int>::reverse_iterator it = ordre.rbegin(); it != ordre.rend(); ++it) {
         int id = *it;
         Tache& t = taches[id];
         t.fin_tard = minDebutSuivantes(id);
@@ -99,7 +124,10 @@ void GrapheOrienté::calculerDates() {
     }
 
     // --- Calcul des marges et tâches critiques ---
-    for (auto& [id, t] : taches) {
+    for (std::pair<const int, Tache>& element : taches) {
+        int id = element.first;
+        Tache& t = element.second;
+
         t.marge = t.debut_tard - t.debut_tot;
         t.critique = (t.marge == 0);
     }
@@ -110,7 +138,7 @@ void GrapheOrienté::calculerDates() {
     for (int id : ordre) {
         const Tache& t = taches.at(id);
         std::cout << id << " | " << t.nom;
-        int spaces = std::max(0, 12 - (int)t.nom.size());
+        int spaces = std::max(0, 12 - static_cast<int>(t.nom.size()));
         std::cout << std::string(spaces, ' ')
                   << "| " << t.debut_tot
                   << " | " << t.debut_tard
@@ -119,24 +147,25 @@ void GrapheOrienté::calculerDates() {
     }
 
     std::cout << "-------------------------------------------------------\n";
-    
+
     /* Chemin critique */
     std::vector<int> cheminCritique;
-    for(auto& [id, t] : taches)
-    {
+    for (std::pair<const int, Tache>& element : taches) {
+        int id = element.first;
+        Tache& t = element.second;
+
         t.marge = t.debut_tard - t.debut_tot;
         t.critique = (t.marge == 0);
-        if(t.critique)
-        {
+
+        if (t.critique) {
             cheminCritique.push_back(id);
         }
     }
+
     std::reverse(cheminCritique.begin(), cheminCritique.end());
     std::cout << "Chemin critique : ";
-    for(size_t i = 0; i < cheminCritique.size(); ++i)
-    {
-        if(i > 0) 
-        {
+    for (size_t i = 0; i < cheminCritique.size(); ++i) {
+        if (i > 0) {
             std::cout << " -> ";
         }
         std::cout << cheminCritique[i];
@@ -144,28 +173,27 @@ void GrapheOrienté::calculerDates() {
     std::cout << std::endl;
 
     /* Tâches pouvant être retardées */
-    std::vector<int> Marge;
-    for(auto& [id, t] : taches)
-    {
-        t.marge = t.debut_tard - t.debut_tot;
-        if(t.marge != 0)
-        {
-            Marge.push_back(id);
+    std::vector<int> margeTaches;
+    for (std::pair<const int, Tache>& element : taches) {
+        int id = element.first;
+        Tache& t = element.second;
+
+        if (t.debut_tard - t.debut_tot != 0) {
+            margeTaches.push_back(id);
         }
     }
-    std::reverse(Marge.begin(), Marge.end());
-    std::cout << "Tâche avec marge : ";
-    for(size_t i = 0; i < Marge.size(); ++i)
-    {
-        int id = Marge[i];
-        auto& t = taches[id];
+
+    std::reverse(margeTaches.begin(), margeTaches.end());
+    std::cout << "Tâches avec marge : ";
+    for (size_t i = 0; i < margeTaches.size(); ++i) {
+        int id = margeTaches[i];
+        Tache& t = taches[id];
         std::cout << id << "(" << t.marge << "j)";
-        if(i < Marge.size() - 1)
-        {
+        if (i < margeTaches.size() - 1) {
             std::cout << "; ";
         }
     }
+
     std::cout << std::endl;
-    
     std::cout << "\nDurée minimale du projet : " << fin_projet << " jours\n";
 }

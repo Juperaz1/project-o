@@ -28,7 +28,7 @@ class GrapheOrienté {
 private:
     std::unordered_map<int, Tache> taches;
 
-    bool dfsDetectCycle(int id, std::unordered_map<int, int>& etat) const;
+    bool DetectCycle(int id, std::unordered_map<int, int>& etat) const;
     int maxFinPrecedentes(const std::vector<int>& deps) const;
     int minDebutSuivantes(int id) const;
 
