@@ -7,10 +7,7 @@
 #include <string>
 #include <algorithm>
 #include <climits>
-
-struct Arc {
-    int destination;
-};
+using namespace std;
 
 struct Tache {
     std::string nom;
@@ -26,19 +23,33 @@ struct Tache {
 
 };
 
+
+// Classe représentant le graphe orienté des tâches du projet
+
 class GrapheOrienté {
 private:
-    std::unordered_map<int, Tache> taches;
+    // clé = ID de la tâche, valeur = structure Tache
+    unordered_map<int, Tache> taches;
 
-    bool dfsDetectCycle(int id, std::unordered_map<int, int>& etat) const;
-    int maxFinPrecedentes(const std::vector<int>& deps) const;
+    // --- Méthodes internes ---
+    bool DetectCycle(int id, unordered_map<int, int>& etat) const;
+    int maxFinPrecedentes(const vector<int>& deps) const;
     int minDebutSuivantes(int id) const;
 
 public:
-    void ajouterTache(int id, const std::string& nom, int duree);
+    // --- Constructeurs / Destructeurs ---
+    GrapheOrienté() = default;
+    ~GrapheOrienté() = default;
+
+    // --- Gestion du graphe ---
+    void ajouterTache(int id, const string& nom, int duree);
     void ajouterArc(int source, int destination);
     void afficher() const;
+
+    // --- Vérification de cohérence ---
     bool estRealisable() const;
+
+    // --- Calculs d’ordonnancement ---
     void calculerDates();
     void modifierTache(int id, int nouvelleDuree, int decalageDebut);
     void modifierDebutTache(int id, int decalage);
