@@ -7,36 +7,47 @@
 #include <string>
 #include <algorithm>
 #include <climits>
-
-struct Arc {
-    int destination;
-};
+using namespace std;
 
 struct Tache {
-    std::string nom;
-    int duree;
-    std::vector<int> dependances;
-    int debut_tot = 0;
-    int fin_tot = 0;
-    int debut_tard = 0;
-    int fin_tard = 0;
-    int marge = 0;
-    bool critique = false;
+    string nom;                // Nom de la tâche (ex: "Murs")
+    int duree;                      // Durée de la tâche en jours
+    vector<int> dependances;   // Liste des tâches dont celle-ci dépend
+    int debut_tot = 0;              // Date de début au plus tôt
+    int fin_tot = 0;                // Date de fin au plus tôt
+    int debut_tard = 0;             // Date de début au plus tard
+    int fin_tard = 0;               // Date de fin au plus tard
+    int marge = 0;                  // Marge de flexibilité
+    bool critique = false;          // Tâche critique (aucune marge)
 };
+
+
+// Classe représentant le graphe orienté des tâches du projet
 
 class GrapheOrienté {
 private:
-    std::unordered_map<int, Tache> taches;
+    // clé = ID de la tâche, valeur = structure Tache
+    unordered_map<int, Tache> taches;
 
-    bool DetectCycle(int id, std::unordered_map<int, int>& etat) const;
-    int maxFinPrecedentes(const std::vector<int>& deps) const;
+    // --- Méthodes internes ---
+    bool DetectCycle(int id, unordered_map<int, int>& etat) const;
+    int maxFinPrecedentes(const vector<int>& deps) const;
     int minDebutSuivantes(int id) const;
 
 public:
-    void ajouterTache(int id, const std::string& nom, int duree);
+    // --- Constructeurs / Destructeurs ---
+    GrapheOrienté() = default;
+    ~GrapheOrienté() = default;
+
+    // --- Gestion du graphe ---
+    void ajouterTache(int id, const string& nom, int duree);
     void ajouterArc(int source, int destination);
     void afficher() const;
+
+    // --- Vérification de cohérence ---
     bool estRealisable() const;
+
+    // --- Calculs d’ordonnancement ---
     void calculerDates();
 };
 
