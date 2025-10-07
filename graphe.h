@@ -22,6 +22,8 @@ struct Tache {
     int fin_tard = 0;
     int marge = 0;
     bool critique = false;
+    int retardManuel = 0; // Retard imposé manuellement à la tâche
+
 };
 
 class GrapheOrienté {
@@ -38,6 +40,10 @@ public:
     void afficher() const;
     bool estRealisable() const;
     void calculerDates();
+    void modifierTache(int id, int nouvelleDuree, int decalageDebut);
+    void modifierDebutTache(int id, int decalage);
+
+    
 };
 
 #endif

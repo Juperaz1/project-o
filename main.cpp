@@ -38,6 +38,23 @@ int main() {
     } else {
         std::cout << "Le projet contient des dépendances circulaires !\n";
     }
+    
+    int id, decalage;
+    std::cout << "\nEntrez l'ID de la tâche à décaler (0 pour quitter) : ";
+    std::cin >> id;
+
+    if (id == 0) {
+        std::cout << "❌ Opération annulée par l'utilisateur.\n";
+        return 0; // ou continue / break selon ton usage
+    }
+
+    std::cout << "Entrez le nombre de jours de décalage (positif = retard, négatif = avancer) : ";
+    std::cin >> decalage;
+
+    projet.modifierDebutTache(id, decalage);
+
+
+
 
     return 0;
 }
