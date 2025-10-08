@@ -2,3 +2,7 @@ echo "build/" > .gitignore
 echo "*.o" >> .gitignore
 echo "*.exe" >> .gitignore
 echo "*.out" >> .gitignore
+
+# Dossier de build CMake
+/build/
+build/
