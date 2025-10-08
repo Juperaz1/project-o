@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -14,7 +15,7 @@ using namespace std;
 
 struct Tache
 {
-    std::string nom;
+    string nom;
     int duree;
     vector<int> dependances;
     int debutFixe = 0;
@@ -34,7 +35,7 @@ class GrapheOrienté
 {
 private:
     // clé = ID de la tâche, valeur = structure Tache
-    unordered_map<int, Tache> taches;
+    map<int, Tache> taches;
 
     // --- Méthodes internes ---
     bool DetectCycle(int id, unordered_map<int, int> &etat) const;

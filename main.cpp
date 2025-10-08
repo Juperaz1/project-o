@@ -2,13 +2,9 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
-    {
-        cerr << " Utilisation : " << argv[0] << " <nom_du_fichier.txt>\n";
-        return 1;
-    }
-
-    string nomFichier = argv[1];
+    cout << " Entrez un chemin d'un fichier TXT contenant un graphe dans le format correct : ";
+    string nomFichier;
+    cin >> nomFichier;
     GrapheOrienté projet;
 
     projet.chargerDepuisFichier(nomFichier);
@@ -29,7 +25,7 @@ int main(int argc, char *argv[])
     {
 
         int valmenu;
-        cout << "1. Décaler une tache \n 2. Sauvegarder le graphe dans un fichier \n 3.  Changer le graphe \n 0. quitter \n ";
+        cout << " 1. Décaler une tache \n 2. Sauvegarder le graphe dans un fichier \n 3. Charger un nouveau graphe (depuis un .txt) \n 0. Quitter \n ";
         cin >> valmenu;
         switch (valmenu)
         {
@@ -42,7 +38,7 @@ int main(int argc, char *argv[])
             if (id == 0)
             {
                 cout << " Opération annulée par l'utilisateur.\n";
-                return 0; // ou continue / break selon ton usage
+                return 0;
             }
 
             cout << "Entrez le nombre de jours de décalage (positif = retard, négatif = avancer) : ";
@@ -57,6 +53,8 @@ int main(int argc, char *argv[])
         }
         case 3:
         {
+            cout << " Entrez un chemin d'un fichier TXT contenant un graphe dans le format correct : ";
+            cin >> nomFichier;
             projet.chargerDepuisFichier(nomFichier);
             projet.afficher();
 

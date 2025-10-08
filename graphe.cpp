@@ -1,9 +1,24 @@
 #include "graphe.h"
 using namespace std;
 
+// --- Ajout d’une tâche ---
+void GrapheOrienté::ajouterTache(int id, const string &nom, int duree)
+{
+    taches[id] = {nom, duree};
+}
+
+// --- Ajout d’un arc orienté ---
+void GrapheOrienté::ajouterArc(int source, int destination)
+{
+    taches[destination].dependances.push_back(source);
+}
+
 // --- Lecture du graphe depuis un fichier texte ---
 void GrapheOrienté::chargerDepuisFichier(const string &nomFichier)
 {
+    taches.clear(); // Réinitialise le graphe avant de charger un nouveau fichier
+
+
     ifstream fichier(nomFichier);
 
     if (!fichier.is_open())
@@ -43,19 +58,7 @@ void GrapheOrienté::chargerDepuisFichier(const string &nomFichier)
     }
 
     fichier.close();
-    cout << "✅ Graphe chargé depuis " << nomFichier << "\n";
-}
-
-// --- Ajout d’une tâche ---
-void GrapheOrienté::ajouterTache(int id, const string &nom, int duree)
-{
-    taches[id] = {nom, duree};
-}
-
-// --- Ajout d’un arc orienté ---
-void GrapheOrienté::ajouterArc(int source, int destination)
-{
-    taches[destination].dependances.push_back(source);
+    cout << " Graphe chargé depuis " << nomFichier << "\n";
 }
 
 // --- Affichage simple du graphe ---
@@ -83,10 +86,10 @@ bool GrapheOrienté::DetectCycle(int id, unordered_map<int, int> &etat) const
     const vector<int> &dependances = taches.at(id).dependances;
     for (int dep : dependances)
     {
-        if (etat[dep] == 1)
-            return true; // cycle détecté
-        if (etat[dep] == 0 && DetectCycle(dep, etat))
-            return true; // appel récursif
+        if (etat[dep] == 1)  // cycle détecté
+            return true; 
+        if (etat[dep] == 0 && DetectCycle(dep, etat))  // appel récursif
+            return true; 
     }
 
     etat[id] = 2;
@@ -177,7 +180,7 @@ void GrapheOrienté::calculerDates()
     for (int id : ordre)
     {
         Tache &t = taches[id];
-        t.debut_tot = max(maxFinPrecedentes(t.dependances), t.debut_tot) + t.retardManuel;
+        t.debut_tot = maxFinPrecedentes(t.dependances) + t.retardManuel;
         t.fin_tot = t.debut_tot + t.duree;
     }
 
@@ -218,7 +221,7 @@ void GrapheOrienté::calculerDates()
              << "| " << t.debut_tot
              << " | " << t.debut_tard
              << " | " << t.marge
-             << " | " << (t.critique ? "★" : "") << "\n";
+             << " | " << (t.critique ? "*" : "") << "\n";
     }
     cout << "-------------------------------------------------------\n";
 }
@@ -283,7 +286,7 @@ void GrapheOrienté::modifierDebutTache(int id, int decalage)
     cout << "Début au plus tôt : " << t.debut_tot << "\n";
     cout << "Début au plus tard : " << t.debut_tard << "\n";
     cout << "Marge restante : " << t.marge << " jour(s)\n";
-    cout << "Chemin critique : " << (t.critique ? "★ Oui" : "Non") << "\n";
+    cout << "Chemin critique : " << (t.critique ? "* Oui" : "Non") << "\n";
 
     if (nouvelle_duree_projet > ancienne_duree_projet)
     {
