@@ -217,7 +217,14 @@ CMakeFiles/graphe.dir/graphe.cpp.o: /home/etud/Documents/ProjetHamiez/graphe.cpp
   /usr/include/linux/limits.h \
   /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
   /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
-  /usr/include/x86_64-linux-gnu/bits/uio_lim.h
+  /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
+  /usr/include/c++/12/fstream \
+  /usr/include/c++/12/bits/codecvt.h \
+  /usr/include/x86_64-linux-gnu/c++/12/bits/basic_file.h \
+  /usr/include/x86_64-linux-gnu/c++/12/bits/c++io.h \
+  /usr/include/c++/12/bits/fstream.tcc \
+  /usr/include/c++/12/sstream \
+  /usr/include/c++/12/bits/sstream.tcc
 
 CMakeFiles/graphe.dir/main.cpp.o: /home/etud/Documents/ProjetHamiez/main.cpp \
   /usr/include/stdc-predef.h \
@@ -435,10 +442,29 @@ CMakeFiles/graphe.dir/main.cpp.o: /home/etud/Documents/ProjetHamiez/main.cpp \
   /usr/include/linux/limits.h \
   /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
   /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
-  /usr/include/x86_64-linux-gnu/bits/uio_lim.h
+  /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
+  /usr/include/c++/12/fstream \
+  /usr/include/c++/12/bits/codecvt.h \
+  /usr/include/x86_64-linux-gnu/c++/12/bits/basic_file.h \
+  /usr/include/x86_64-linux-gnu/c++/12/bits/c++io.h \
+  /usr/include/c++/12/bits/fstream.tcc \
+  /usr/include/c++/12/sstream \
+  /usr/include/c++/12/bits/sstream.tcc
 
 
 /home/etud/Documents/ProjetHamiez/main.cpp:
+
+/usr/include/c++/12/sstream:
+
+/usr/include/c++/12/bits/fstream.tcc:
+
+/usr/include/x86_64-linux-gnu/c++/12/bits/c++io.h:
+
+/usr/include/c++/12/bits/codecvt.h:
+
+/usr/include/c++/12/fstream:
+
+/usr/include/x86_64-linux-gnu/c++/12/bits/basic_file.h:
 
 /usr/include/x86_64-linux-gnu/bits/posix1_lim.h:
 
@@ -531,6 +557,8 @@ CMakeFiles/graphe.dir/main.cpp.o: /home/etud/Documents/ProjetHamiez/main.cpp \
 /usr/include/x86_64-linux-gnu/bits/waitstatus.h:
 
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
+
+/usr/include/c++/12/bits/sstream.tcc:
 
 /usr/include/x86_64-linux-gnu/bits/byteswap.h:
 
