@@ -10,9 +10,9 @@
 using namespace std;
 
 struct Tache {
-    std::string nom;
+    string nom;
     int duree;
-    std::vector<int> dependances;
+    vector<int> dependances;
     int debut_tot = 0;
     int fin_tot = 0;
     int debut_tard = 0;
@@ -20,6 +20,13 @@ struct Tache {
     int marge = 0;
     bool critique = false;
     int retardManuel = 0; // Retard imposé manuellement à la tâche
+    int debut;       // calculé par l’algorithme
+    int debutFixe = -1;  // -1 si aucune date fixe
+    Tache(const string& n = "", int d = 0)
+        : nom(n), duree(d), debut_tot(0), fin_tot(0),
+          debut_tard(0), fin_tard(0), marge(0), critique(false),
+          retardManuel(0), debutFixe(-1) {}
+
 
 };
 
@@ -53,8 +60,9 @@ public:
     void calculerDates();
     void modifierTache(int id, int nouvelleDuree, int decalageDebut);
     void modifierDebutTache(int id, int decalage);
-
+    void setDebutFixe(int id, int dateFixe);
     
 };
+
 
 #endif

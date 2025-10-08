@@ -2,7 +2,19 @@
 
 // --- Ajout d’une tâche ---
 void GrapheOrienté::ajouterTache(int id, const std::string& nom, int duree) {
-    taches[id] = {nom, duree};
+    Tache t;
+    t.nom = nom;
+    t.duree = duree;
+    t.debut_tot = 0;
+    t.fin_tot = 0;
+    t.debut_tard = 0;
+    t.fin_tard = 0;
+    t.marge = 0;
+    t.critique = false;
+    t.retardManuel = 0;
+    t.debutFixe = -1;
+
+    taches[id] = t;
 }
 
 // --- Ajout d’un arc orienté ---
@@ -14,7 +26,7 @@ void GrapheOrienté::ajouterArc(int source, int destination) {
 void GrapheOrienté::afficher() const {
     std::cout << "\n=== Graphe des dépendances ===\n";
 
-    for (const std::pair<const int, Tache>& element : taches) { 
+    for (const auto& element : taches) { 
         int id = element.first;
         const Tache& t = element.second;
 
@@ -27,31 +39,26 @@ void GrapheOrienté::afficher() const {
 
 // --- Détection de cycle ---
 bool GrapheOrienté::DetectCycle(int id, std::unordered_map<int, int>& etat) const {
-    etat[id] = 1; // tâche en cours de visite
+    etat[id] = 1;
 
-    const std::vector<int>& dependances = taches.at(id).dependances;
-    for (int dep : dependances) { // Parcours des dépendances
-        if (etat[dep] == 1) return true; // cycle détecté
-        if (etat[dep] == 0 && DetectCycle(dep, etat)) return true; // appel récursif
+    for (int dep : taches.at(id).dependances) {
+        if (etat[dep] == 1) return true;
+        if (etat[dep] == 0 && DetectCycle(dep, etat)) return true;
     }
 
-    etat[id] = 2; // tâche terminée
+    etat[id] = 2;
     return false;
 }
 
 bool GrapheOrienté::estRealisable() const {
     std::unordered_map<int, int> etat;
 
-    for (const std::pair<const int, Tache>& element : taches) {
-        int id = element.first;
-        etat[id] = 0;
-    }
+    for (const auto& element : taches)
+        etat[element.first] = 0;
 
-    for (const std::pair<const int, Tache>& element : taches) {
-        int id = element.first;
-        if (etat[id] == 0 && DetectCycle(id, etat))
+    for (const auto& element : taches)
+        if (etat[element.first] == 0 && DetectCycle(element.first, etat))
             return false;
-    }
 
     return true;
 }
@@ -68,8 +75,7 @@ int GrapheOrienté::maxFinPrecedentes(const std::vector<int>& deps) const {
 int GrapheOrienté::minDebutSuivantes(int id) const {
     int min_debut = INT_MAX;
 
-    for (const std::pair<const int, Tache>& element : taches) {
-        const int k = element.first;
+    for (const auto& element : taches) {
         const Tache& t = element.second;
 
         if (std::find(t.dependances.begin(), t.dependances.end(), id) != t.dependances.end()) {
@@ -79,22 +85,19 @@ int GrapheOrienté::minDebutSuivantes(int id) const {
 
     return (min_debut == INT_MAX) ? taches.at(id).fin_tot : min_debut;
 }
+
 // --- Modifier une tâche et vérifier impact ---
-void GrapheOrienté::modifierTache(int id, int nouvelleDuree, int decalageDuree = 0) {
+void GrapheOrienté::modifierTache(int id, int nouvelleDuree, int decalageDuree) {
     if (taches.find(id) == taches.end()) {
         std::cout << "⚠️  Tâche inexistante !\n";
         return;
     }
 
     Tache& t = taches[id];
-
-    // On change seulement la durée si besoin
     t.duree = nouvelleDuree;
 
-    // Recalcul des dates pour tout le projet
     calculerDates();
 
-    // Vérifie si la tâche est critique après recalcul
     if (t.critique) {
         std::cout << "❌ Attention ! La tâche \"" << t.nom 
                   << "\" est sur le chemin critique, tout décalage retardera le projet !\n";
@@ -105,136 +108,120 @@ void GrapheOrienté::modifierTache(int id, int nouvelleDuree, int decalageDuree 
 
 // --- Calcul des dates au plus tôt / au plus tard / marges ---
 void GrapheOrienté::calculerDates() {
-    // Vérifie d’abord si le graphe est valide
     if (!estRealisable()) {
         std::cout << "⚠️  Projet non réalisable (cycle détecté)\n";
         return;
     }
 
-    // Tri topologique simple (manuel ici)
     std::vector<int> ordre;
-    for (const std::pair<const int, Tache>& element : taches) {
-        int id = element.first;
-        ordre.push_back(id);
-    }
+    for (const auto& element : taches)
+        ordre.push_back(element.first);
     std::sort(ordre.begin(), ordre.end());
 
-    // --- Calcul des dates au plus tôt ---
+    // --- Étape 1 : Calcul des dates au plus tôt ---
     for (int id : ordre) {
         Tache& t = taches[id];
-t.debut_tot = std::max(maxFinPrecedentes(t.dependances), t.debut_tot) + t.retardManuel;
+
+        if (t.debutFixe != -1)
+            t.debut_tot = t.debutFixe + t.retardManuel;
+        else
+            t.debut_tot = std::max(maxFinPrecedentes(t.dependances), t.debut_tot) + t.retardManuel;
+
         t.fin_tot = t.debut_tot + t.duree;
     }
 
-    // --- Fin du projet ---
+    // --- Étape 2 : Forcer chevauchement T3 & T4 >= 1 unité ---
+    if (taches.count(3) && taches.count(4)) {
+        Tache& t3 = taches[3];
+        Tache& t4 = taches[4];
+
+        if (t3.fin_tot <= t4.debut_tot) {
+            t3.debut_tot = t4.debut_tot; // commence en même temps que T4
+            t3.fin_tot = t3.debut_tot + t3.duree;
+        }
+    }
+
+    // --- Étape 3 : T5 ne peut commencer avant le début de T3 ---
+    if (taches.count(3) && taches.count(5)) {
+        Tache& t3 = taches[3];
+        Tache& t5 = taches[5];
+
+        if (t5.debut_tot < t3.debut_tot) {
+            t5.debut_tot = t3.debut_tot;
+            t5.fin_tot = t5.debut_tot + t5.duree;
+        }
+    }
+
+    // --- Étape 4 : Fin projet ---
     int fin_projet = 0;
     for (int id : ordre)
         fin_projet = std::max(fin_projet, taches[id].fin_tot);
 
-    // --- Initialisation des dates au plus tard ---
+    // --- Étape 5 : Initialiser au plus tard à la fin du projet ---
     for (int id : ordre) {
         Tache& t = taches[id];
         t.fin_tard = fin_projet;
         t.debut_tard = fin_projet - t.duree;
     }
 
-    // --- Calcul des dates au plus tard (retour en arrière) ---
-    for (std::vector<int>::reverse_iterator it = ordre.rbegin(); it != ordre.rend(); ++it) {
+    // --- Étape 6 : Calcul des dates au plus tard (retour) ---
+    for (auto it = ordre.rbegin(); it != ordre.rend(); ++it) {
         int id = *it;
         Tache& t = taches[id];
         t.fin_tard = minDebutSuivantes(id);
         t.debut_tard = t.fin_tard - t.duree;
     }
 
-    // --- Calcul des marges et tâches critiques ---
-    for (std::pair<const int, Tache>& element : taches) {
-        int id = element.first;
-        Tache& t = element.second;
-
+    // --- Étape 7 : Marges et critiques ---
+    for (auto& [_, t] : taches) {
         t.marge = t.debut_tard - t.debut_tot;
         t.critique = (t.marge == 0);
     }
 
-   // --- Affichage ---
-   std::cout << "\nID | Tâche | Début+Tôt | Début+Tard | Marge | Critique\n";
-   std::cout << "-------------------------------------------------------\n";
-   for (int id : ordre) {
-       const Tache& t = taches.at(id);
-       std::cout << id << " | " << t.nom;
-       int spaces = std::max(0, 12 - (int)t.nom.size());
-       std::cout << std::string(spaces, ' ')
-                 << "| " << t.debut_tot
-                 << " | " << t.debut_tard
-                 << " | " << t.marge
-                 << " | " << (t.critique ? "★" : "") << "\n";
-   }
     // --- Affichage ---
     std::cout << "\nID | Tâche | Début+Tôt | Début+Tard | Marge | Critique\n";
     std::cout << "-------------------------------------------------------\n";
     for (int id : ordre) {
         const Tache& t = taches.at(id);
-        std::cout << id << " | " << t.nom;
-        int spaces = std::max(0, 12 - static_cast<int>(t.nom.size()));
-        std::cout << std::string(spaces, ' ')
+        std::cout << id << " | " << t.nom
+                  << std::string(std::max(0, 12 - (int)t.nom.size()), ' ')
                   << "| " << t.debut_tot
                   << " | " << t.debut_tard
                   << " | " << t.marge
                   << " | " << (t.critique ? "★" : "") << "\n";
     }
 
-    std::cout << "-------------------------------------------------------\n";
-
-    /* Chemin critique */
+    // --- Chemin critique ---
     std::vector<int> cheminCritique;
-    for (std::pair<const int, Tache>& element : taches) {
-        int id = element.first;
-        Tache& t = element.second;
-
-        t.marge = t.debut_tard - t.debut_tot;
-        t.critique = (t.marge == 0);
-
-        if (t.critique) {
-            cheminCritique.push_back(id);
-        }
-    }
+    for (const auto& [id, t] : taches)
+        if (t.critique) cheminCritique.push_back(id);
 
     std::reverse(cheminCritique.begin(), cheminCritique.end());
     std::cout << "Chemin critique : ";
-    for (size_t i = 0; i < cheminCritique.size(); ++i) {
-        if (i > 0) {
-            std::cout << " -> ";
-        }
-        std::cout << cheminCritique[i];
-    }
-    std::cout << std::endl;
+    for (size_t i = 0; i < cheminCritique.size(); ++i)
+        std::cout << (i > 0 ? " -> " : "") << cheminCritique[i];
+    std::cout << "\n";
 
-    /* Tâches pouvant être retardées */
+    // --- Tâches avec marge ---
     std::vector<int> margeTaches;
-    for (std::pair<const int, Tache>& element : taches) {
-        int id = element.first;
-        Tache& t = element.second;
-
-        if (t.debut_tard - t.debut_tot != 0) {
-            margeTaches.push_back(id);
-        }
-    }
+    for (const auto& [id, t] : taches)
+        if (t.marge != 0) margeTaches.push_back(id);
 
     std::reverse(margeTaches.begin(), margeTaches.end());
     std::cout << "Tâches avec marge : ";
     for (size_t i = 0; i < margeTaches.size(); ++i) {
         int id = margeTaches[i];
-        Tache& t = taches[id];
+        const Tache& t = taches.at(id);
         std::cout << id << "(" << t.marge << "j)";
-        if (i < margeTaches.size() - 1) {
-            std::cout << "; ";
-        }
+        if (i < margeTaches.size() - 1) std::cout << "; ";
     }
+    std::cout << "\n";
 
-    std::cout << std::endl;
     std::cout << "\nDurée minimale du projet : " << fin_projet << " jours\n";
-    //std::cout << "-------------------------------------------------------\n";
-    //std::cout << "Durée minimale du projet : " << fin_projet << " jours\n";
 }
+
+
+// --- Décaler une tâche ---
 void GrapheOrienté::modifierDebutTache(int id, int decalage) {
     if (taches.find(id) == taches.end()) {
         std::cout << "⚠️ Tâche inexistante !\n";
@@ -243,24 +230,19 @@ void GrapheOrienté::modifierDebutTache(int id, int decalage) {
 
     Tache& t = taches[id];
 
-    // 1. Calcul de la durée actuelle du projet
     calculerDates();
     int ancienne_duree_projet = 0;
     for (const auto& [_, task] : taches)
         ancienne_duree_projet = std::max(ancienne_duree_projet, task.fin_tot);
 
-    // 2. Appliquer le décalage manuel
     t.retardManuel += decalage;
 
-    // 3. Recalcul des dates après décalage
     calculerDates();
 
-    // 4. Nouvelle durée après recalcul
     int nouvelle_duree_projet = 0;
     for (const auto& [_, task] : taches)
         nouvelle_duree_projet = std::max(nouvelle_duree_projet, task.fin_tot);
 
-    // 5. Affichage
     std::cout << "\n=== Résultat du décalage ===\n";
     std::cout << "Tâche \"" << t.nom << "\" (ID " << id << ") décalée de " << decalage << " jour(s)\n";
     std::cout << "Début au plus tôt : " << t.debut_tot << "\n";
@@ -269,15 +251,20 @@ void GrapheOrienté::modifierDebutTache(int id, int decalage) {
     std::cout << "Chemin critique : " << (t.critique ? "★ Oui" : "Non") << "\n";
 
     if (nouvelle_duree_projet > ancienne_duree_projet) {
-        std::cout << "❗ Impossible : la date minimale du projet est désormais retardée !\n";
-        std::cout << "⏳ Le projet durera " << nouvelle_duree_projet
-                  << " jours au lieu de " << ancienne_duree_projet << " jours.\n";
+        std::cout << "❗ La date minimale du projet est retardée : "
+                  << nouvelle_duree_projet << " jours (avant " << ancienne_duree_projet << ")\n";
     } else if (nouvelle_duree_projet < ancienne_duree_projet) {
-        std::cout << "✅ Le projet est raccourci : " 
-                  << nouvelle_duree_projet << " jours au lieu de " << ancienne_duree_projet << ".\n";
+        std::cout << "✅ Projet raccourci : " << nouvelle_duree_projet << " jours\n";
     } else {
         std::cout << "✅ Ce décalage n’impacte pas la durée minimale du projet.\n";
     }
 
     std::cout << "============================\n";
+}
+
+// --- Fixer une date de début fixe ---
+void GrapheOrienté::setDebutFixe(int id, int dateFixe) {
+    if (taches.find(id) != taches.end()) {
+        taches[id].debutFixe = dateFixe;
+    }
 }
