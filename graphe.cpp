@@ -226,29 +226,39 @@ void GrapheOrienté::calculerDates()
     cout << "-------------------------------------------------------\n";
 }
 
-// --- Sauvegarde ---
+// --- Sauvegarde --- //faire en sorte qu'on demande  dans quel fichier sauvegarder au lieu de p1 automatiquement
 void GrapheOrienté::sauvegarder(const string &nomFichier) const
 {
     ofstream fichier(nomFichier);
     if (!fichier.is_open())
         throw runtime_error("Erreur : impossible d'ouvrir le fichier pour écriture.");
 
-    fichier << taches.size() << endl;
+    // Récupérer et trier les identifiants
+    vector<int> ids;
+    ids.reserve(taches.size());
+    for (const auto &p : taches)
+        ids.push_back(p.first);
+    sort(ids.begin(), ids.end());
 
-    for (const pair<const int, Tache> &element : taches)
+    // Écriture dans l'ordre croissant
+    for (int id : ids)
     {
-        int id = element.first;
-        const Tache &t = element.second;
+        const Tache &t = taches.at(id);
+        fichier << id << " " << t.nom << " " << t.duree << " ";
 
-        fichier << id << "\t" << t.nom << "\t" << t.duree
-                << "\t" << t.dependances.size();
-        for (int dep : t.dependances)
-            fichier << "\t" << dep;
+        if (t.dependances.empty()) {
+            fichier << "-";
+        } else {
+            for (size_t i = 0; i < t.dependances.size(); ++i) {
+                fichier << t.dependances[i];
+                if (i != t.dependances.size() - 1)
+                    fichier << " ";
+            }
+        }
         fichier << endl;
     }
-
     fichier.close();
-    cout << "Graphe sauvegardé dans " << nomFichier << endl;
+    cout << "✅ Graphe sauvegardé dans " << nomFichier << " (ordre croissant)" << endl;
 }
 
 // --- Modifier le début d’une tâche ---
