@@ -12,16 +12,12 @@
 
 using namespace std;
 
-<<<<<<< HEAD
-struct Tache {
-    string nom;
-=======
 struct Tache
 {
     std::string nom;
->>>>>>> 67c54d8 (Sauvegarde/ ajout du charger (fonctionnel) sauvergarder (non fonctionnel et menu)
     int duree;
     vector<int> dependances;
+    int debutFixe = 0;
     int debut_tot = 0;
     int fin_tot = 0;
     int debut_tard = 0;
@@ -29,17 +25,7 @@ struct Tache
     int marge = 0;
     bool critique = false;
     int retardManuel = 0; // Retard imposé manuellement à la tâche
-<<<<<<< HEAD
-    int debut;       // calculé par l’algorithme
-    int debutFixe = -1;  // -1 si aucune date fixe
-    Tache(const string& n = "", int d = 0)
-        : nom(n), duree(d), debut_tot(0), fin_tot(0),
-          debut_tard(0), fin_tard(0), marge(0), critique(false),
-          retardManuel(0), debutFixe(-1) {}
-
-
-=======
->>>>>>> 67c54d8 (Sauvegarde/ ajout du charger (fonctionnel) sauvergarder (non fonctionnel et menu)
+    
 };
 
 // Classe représentant le graphe orienté des tâches du projet
@@ -74,11 +60,8 @@ public:
     void calculerDates();
     void modifierTache(int id, int nouvelleDuree, int decalageDebut);
     void modifierDebutTache(int id, int decalage);
-<<<<<<< HEAD
     void setDebutFixe(int id, int dateFixe);
     
-=======
->>>>>>> 67c54d8 (Sauvegarde/ ajout du charger (fonctionnel) sauvergarder (non fonctionnel et menu)
 };
 
 
