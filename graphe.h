@@ -26,7 +26,8 @@ struct Tache
     int marge = 0;
     bool critique = false;
     int retardManuel = 0; // Retard imposé manuellement à la tâche
-    
+    vector<int> chevauchements; 
+    int debut_min;
 };
 
 // Classe représentant le graphe orienté des tâches du projet
