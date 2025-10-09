@@ -5,14 +5,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+/* Vérifie si le fichier existe */
 bool fichierExiste(const string &chemin)
 {
     ifstream f(chemin);
     return f.good();
 }
 
-// Crée le dossier si besoin
-void creerDossier(const string &nomDossier) {
+/* Crée le dossier si besoin */
+void creerDossier(const string &nomDossier)
+{
     int ret = mkdir(nomDossier.c_str(), 0777);
     if(ret != 0 && errno != EEXIST)
     {
@@ -21,25 +23,29 @@ void creerDossier(const string &nomDossier) {
 }
 
 
-string choisirFichierSauvegarde() {
-    string dossier = "../graphe";   // au même niveau que build
+string choisirFichierSauvegarde()
+{
+    string dossier = "../graphe";
     creerDossier(dossier);
-
     string nomFichier;
     cout << "Entrez le nom du fichier (sans extension) : ";
     cin >> nomFichier;
 
     // Construire le chemin complet avec extension
     string cheminComplet = dossier + "/" + nomFichier;
-    if (cheminComplet.size() < 4 || cheminComplet.substr(cheminComplet.size() - 4) != ".txt")
-        cheminComplet += ".txt";
+    if(cheminComplet.size() < 4 || cheminComplet.substr(cheminComplet.size() - 4) != ".txt")
+        {
+            cheminComplet += ".txt";
+        }
 
     // Vérifier si le fichier existe
-    if (fichierExiste(cheminComplet)) {
+    if(fichierExiste(cheminComplet))
+    {
         char choix;
         cout << "Le fichier existe déjà. Voulez-vous l'écraser ? (o/n) : ";
         cin >> choix;
-        if (choix != 'o' && choix != 'O') {
+        if(choix != 'o' && choix != 'O')
+        {
             cout << "Abandon de la sauvegarde." << endl;
             return "";
         }
@@ -101,7 +107,7 @@ int main(int argc, char *argv[])
                 try{
                     projet.sauvegarder(fichier);
                 }
-                catch (const runtime_error &e)
+                catch(const runtime_error &e)
                 {
                     cerr << e.what() << endl;
                 }

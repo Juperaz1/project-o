@@ -224,41 +224,102 @@ void GrapheOrienté::calculerDates()
              << " | " << (t.critique ? "*" : "") << "\n";
     }
     cout << "-------------------------------------------------------\n";
+    
+    /* Chemin critique */
+    vector<int> cheminCritique;
+    for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
+    {
+        int id = it->first;
+        Tache &t = it->second;
+        t.marge = t.debut_tard - t.debut_tot;
+        t.critique = (t.marge == 0);
+        if(t.critique)
+        {
+            cheminCritique.push_back(id);
+        }
+    }
+    cout << "Chemin critique : ";
+    for(size_t i = 0; i < cheminCritique.size(); ++i)
+    {
+        if(i > 0)
+        {
+            cout << " -> ";
+        }
+        cout << cheminCritique[i];
+    }
+    cout << std::endl;
+
+    /* Tâches avec marge */
+    vector<int> Marge;
+
+    for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
+    {
+        int id = it->first;
+        Tache &t = it->second;
+        t.marge = t.debut_tard - t.debut_tot;
+        if(t.marge != 0)
+        {
+            Marge.push_back(id);
+        }
+    }
+
+    cout << "Tâche avec marge : ";
+    for(size_t i = 0; i < Marge.size(); ++i)
+    {
+        int id = Marge[i];
+        Tache &t = taches[id];
+        cout << id << "(" << t.marge << "j)";
+        if(i < Marge.size() - 1)
+        {
+            cout << "; ";
+        }
+    }
+    cout << std::endl;
+    cout << "Durée minimale du projet : " << fin_projet << " jours" << endl << endl;
 }
 
-// --- Sauvegarde --- //faire en sorte qu'on demande  dans quel fichier sauvegarder au lieu de p1 automatiquement
+// --- Sauvegarde ---
 void GrapheOrienté::sauvegarder(const string &nomFichier) const
 {
     ofstream fichier(nomFichier);
-    if (!fichier.is_open())
+    if(!fichier.is_open())
+    {
         throw runtime_error("Erreur : impossible d'ouvrir le fichier pour écriture.");
+    }
 
     // Récupérer et trier les identifiants
     vector<int> ids;
     ids.reserve(taches.size());
-    for (const auto &p : taches)
+    for(const auto &p : taches)
+    {
         ids.push_back(p.first);
+    }
     sort(ids.begin(), ids.end());
 
     // Écriture dans l'ordre croissant
-    for (int id : ids)
+    for(int id : ids)
     {
         const Tache &t = taches.at(id);
         fichier << id << " " << t.nom << " " << t.duree << " ";
-
-        if (t.dependances.empty()) {
+        if(t.dependances.empty())
+        {
             fichier << "-";
-        } else {
-            for (size_t i = 0; i < t.dependances.size(); ++i) {
+        }
+        else
+        {
+            for(size_t i = 0; i < t.dependances.size(); ++i)
+            {
                 fichier << t.dependances[i];
-                if (i != t.dependances.size() - 1)
+                if(i != t.dependances.size() - 1)
+                {
                     fichier << " ";
+                }
             }
         }
         fichier << endl;
     }
     fichier.close();
-    cout << "✅ Graphe sauvegardé dans " << nomFichier << " (ordre croissant)" << endl;
+    cout << "Graphe sauvegardé dans " << nomFichier << " (ordre croissant)" << endl;
 }
 
 // --- Modifier le début d’une tâche ---
