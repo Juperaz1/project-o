@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     {
 
         int valmenu;
-        cout << " 1. Décaler une tache \n 2. Sauvegarder le graphe dans un fichier \n 3. Charger un nouveau graphe (depuis un .txt) \n 0. Quitter \n ";
+        cout << " 1. Décaler une tache \n 2. Sauvegarder le graphe dans un fichier \n 3. Charger un nouveau graphe (depuis un .txt) \n 4. Ajouter une dépendance \n 0. Quitter \n ";
         cin >> valmenu;
         switch (valmenu)
         {
@@ -129,6 +129,35 @@ int main(int argc, char *argv[])
             {
                 cout << "  Projet non réalisable : cycle détecté.\n";
             }
+            break;
+        }
+        case 4:
+        {
+            int source, destination;
+            cout << "\n=== Ajout d'une dépendance ===" << endl;
+            cout << "Entrez l'ID de la tâche source (précédente) : ";
+            cin >> source;
+            cout << "Entrez l'ID de la tâche destination (suivante) : ";
+            cin >> destination;
+            if(source == destination)
+            {
+                cout << "Erreur : une tâche ne peut pas dépendre d’elle-même.\n";
+            }
+            else
+            {
+                projet.ajouterArc(source, destination);
+                cout << "Dépendance ajoutée : Tâche " << destination << " dépend désormais de la tâche " << source << ".\n";
+                projet.afficher();
+                if(projet.estRealisable())
+                    {
+                        projet.calculerDates();
+                    }
+                else
+                    {
+                        cout << "⚠️  Projet non réalisable après ajout (cycle détecté).\n";
+                    }
+            }
+            cout << endl;
             break;
         }
         case 0:

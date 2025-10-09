@@ -278,7 +278,7 @@ void GrapheOrienté::calculerDates()
     cout << "Durée minimale du projet : " << fin_projet << " jours" << endl << endl;
 }
 
-// --- Sauvegarde ---
+/* Sauvegarde */
 void GrapheOrienté::sauvegarder(const string &nomFichier) const
 {
     ofstream fichier(nomFichier);
