@@ -27,7 +27,7 @@ struct Tache
     bool critique = false;
     int retardManuel = 0; // Retard imposé manuellement à la tâche
     vector<int> chevauchements; 
-    int debut_min;
+    int debut_min = 0;
 };
 
 // Classe représentant le graphe orienté des tâches du projet
@@ -50,7 +50,7 @@ class GrapheOrienté
         // --- Gestion du graphe ---
         void chargerDepuisFichier(const string &nomFichier);
         void sauvegarder(const std::string& nomFichier) const;
-        void ajouterTache(int id, const string &nom, int duree);
+        void ajouterTache(int id, const string &nom, int duree, int debut_min);
         void ajouterArc(int source, int destination);
         void afficher() const;
 

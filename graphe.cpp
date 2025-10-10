@@ -1,65 +1,140 @@
 #include "graphe.h"
+#include <iomanip> // ✅ pour setw, setfill, etc.
 using namespace std;
 
 // --- Ajout d’une tâche ---
-void GrapheOrienté::ajouterTache(int id, const string &nom, int duree)
+void GrapheOrienté::ajouterTache(int id, const string &nom, int duree, int debut_min)
 {
-    taches[id] = {nom, duree};
+    Tache t;
+    t.nom = nom;
+    t.duree = duree;
+    t.debut_min = debut_min;
+    taches[id] = t;
 }
+
 
 // --- Ajout d’un arc orienté ---
 void GrapheOrienté::ajouterArc(int source, int destination)
 {
-    taches[destination].dependances.push_back(source);
+    // Ne rien ajouter ici, cette fonction sert juste pour la logique si besoin plus tard.
+    // Elle ne doit pas modifier la structure.
 }
+
 
 // --- Lecture du graphe depuis un fichier texte ---
 void GrapheOrienté::chargerDepuisFichier(const string &nomFichier)
 {
-    taches.clear(); // Réinitialise le graphe avant de charger un nouveau fichier
-
+    taches.clear();
 
     ifstream fichier(nomFichier);
-
-    if (!fichier.is_open())
-    {
+    if (!fichier.is_open()) {
         cerr << "Erreur : impossible d’ouvrir le fichier " << nomFichier << "\n";
         return;
     }
 
     string ligne;
-    while (getline(fichier, ligne))
-    {
-        // Ignore les lignes vides ou commentaires
-        if (ligne.empty() || ligne[0] == '#')
-            continue;
+    bool formatP2 = false;
 
-        istringstream iss(ligne);
-        int id;
-        string nom;
-        int duree;
-
-        if (!(iss >> id >> nom >> duree))
-        {
-            cerr << "Ligne ignorée (format invalide) : " << ligne << "\n";
+    // --- Détection du format (cherche "debut_min" dans l'en-tête si présent) ---
+    streampos posDebut = fichier.tellg();
+    while (getline(fichier, ligne)) {
+        if (ligne.empty()) continue;
+        if (ligne[0] == '#') {
+            if (ligne.find("debut_min") != string::npos) {
+                formatP2 = true;
+            }
+            // si c'est un commentaire on continue la détection
             continue;
         }
+        // première ligne non-commentaire rencontrée, stop
+        break;
+    }
+    // revenir au début du fichier pour relire toutes les lignes
+    fichier.clear();
+    fichier.seekg(0);
+    
+    // --- Lecture réelle ---
+    while (getline(fichier, ligne)) {
+        if (ligne.empty()) continue;
+        if (ligne[0] == '#') continue; // ignorer commentaires
 
-        ajouterTache(id, nom, duree);
+        istringstream iss(ligne);
+        int id = 0, duree = 0;
+        string nom;
+        int debut_min = 0;
 
-        string dep;
-        while (iss >> dep)
-        {
-            if (dep == "-")
+        string depsToken = "-";
+        string chevToken = "-";
+
+        if (formatP2) {
+            // Format attendu : id nom duree debut_min dependances chevauchements
+            // dépendances et chevauchements doivent être des tokens (ex: "1,2" ou "-")
+            if (!(iss >> id >> nom >> duree >> debut_min)) {
+                cerr << "Ligne ignorée (format P2 invalide) : " << ligne << "\n";
                 continue;
-            int idDep = stoi(dep);
-            ajouterArc(idDep, id);
+            }
+            if (!(iss >> depsToken)) depsToken = "-";
+            if (!(iss >> chevToken)) chevToken = "-";
+        } else {
+            // Format P1 : id nom duree dependances(0..n)
+            // Ici les dépendances peuvent être plusieurs entiers séparés par des espaces
+            if (!(iss >> id >> nom >> duree)) {
+                cerr << "Ligne ignorée (format P1 invalide) : " << ligne << "\n";
+                continue;
+            }
+            // récupérer le reste de la ligne (tout ce qui suit) comme dépendances
+            string rest;
+            getline(iss, rest); // lit jusqu'à la fin de la ligne
+            // trim gauche des espaces
+            size_t first = rest.find_first_not_of(" \t");
+            if (first == string::npos) {
+                depsToken = "-";
+            } else {
+                depsToken = rest.substr(first);
+            }
+            // chevToken reste "-" pour P1
+            chevToken = "-";
+        }
+
+        // Créer la tâche
+        ajouterTache(id, nom, duree, debut_min);
+        Tache &t = taches[id];
+
+        // --- Traiter les dépendances : remplacer ',' par ' ' puis lire tous les ints ---
+        if (!depsToken.empty() && depsToken != "-") {
+            // remplacer les virgules par des espaces
+            replace(depsToken.begin(), depsToken.end(), ',', ' ');
+            istringstream ss(depsToken);
+            int val;
+            // s'assurer d'éviter doublons (au cas où)
+            while (ss >> val) {
+                if (find(t.dependances.begin(), t.dependances.end(), val) == t.dependances.end()) {
+                    t.dependances.push_back(val);
+                }
+            }
+        }
+
+        // --- Traiter les chevauchements (P2 seulement) ---
+        if (!chevToken.empty() && chevToken != "-") {
+            replace(chevToken.begin(), chevToken.end(), ',', ' ');
+            istringstream ss2(chevToken);
+            int val;
+            while (ss2 >> val) {
+                if (find(t.chevauchements.begin(), t.chevauchements.end(), val) == t.chevauchements.end()) {
+                    t.chevauchements.push_back(val);
+                }
+            }
         }
     }
 
     fichier.close();
-    cout << " Graphe chargé depuis " << nomFichier << "\n";
+    cout << "✅ Graphe chargé depuis " << nomFichier
+         << (formatP2 ? " (format P2)" : " (format P1)") << "\n";
 }
+
+
+
+
 
 // --- Affichage simple du graphe ---
 void GrapheOrienté::afficher() const
@@ -210,21 +285,38 @@ void GrapheOrienté::calculerDates()
         t.critique = (t.marge == 0);
     }
 
-    cout << "\nID | Tâche | Début+Tôt | Début+Tard | Marge | Critique\n";
-    cout << "-------------------------------------------------------\n";
+    cout << "\nID | Tâche        | Durée | Début_min | Début+Tôt | Début+Tard | Marge | Critique | Chevauchements\n";
+    cout << "----------------------------------------------------------------------------------------------------\n";
     for (int id : ordre)
     {
         const Tache &t = taches.at(id);
-        cout << id << " | " << t.nom;
-        int spaces = max(0, 12 - (int)t.nom.size());
-        cout << string(spaces, ' ')
-             << "| " << t.debut_tot
-             << " | " << t.debut_tard
-             << " | " << t.marge
-             << " | " << (t.critique ? "*" : "") << "\n";
+
+        cout << setw(2) << id << " | "
+             << left << setw(12) << t.nom << " | "
+             << setw(5) << t.duree << " | "
+             << setw(10) << t.debut_min << " | "
+             << setw(10) << t.debut_tot << " | "
+             << setw(11) << t.debut_tard << " | "
+             << setw(5) << t.marge << " | "
+             << (t.critique ? "*" : " ") << " | ";
+
+        // Affichage des chevauchements
+        if (t.chevauchements.empty())
+            cout << "-";
+        else
+        {
+            for (size_t i = 0; i < t.chevauchements.size(); ++i)
+            {
+                cout << t.chevauchements[i];
+                if (i != t.chevauchements.size() - 1)
+                    cout << ",";
+            }
+        }
+
+        cout << "\n";
     }
-    cout << "-------------------------------------------------------\n";
-    
+    cout << "----------------------------------------------------------------------------------------------------\n";
+
     /* Chemin critique */
     vector<int> cheminCritique;
     for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
@@ -279,48 +371,84 @@ void GrapheOrienté::calculerDates()
 }
 
 /* Sauvegarde */
-void GrapheOrienté::sauvegarder(const string &nomFichier) const
+void GrapheOrienté::sauvegarder(const std::string& nomFichier) const
 {
     ofstream fichier(nomFichier);
-    if(!fichier.is_open())
-    {
-        throw runtime_error("Erreur : impossible d'ouvrir le fichier pour écriture.");
+    if (!fichier.is_open()) {
+        throw runtime_error("Erreur : impossible d’ouvrir le fichier pour écriture.");
     }
 
-    // Récupérer et trier les identifiants
+    // Vérifier si au moins une tâche contient des champs avancés (P2)
+    bool formatP2 = false;
+    for (const auto& [id, t] : taches) {
+        if (t.debut_min != 0 || !t.chevauchements.empty()) {
+            formatP2 = true;
+            break;
+        }
+    }
+
+    // Écriture de l’en-tête (facultative pour compatibilité)
+    if (formatP2)
+        fichier << "# id nom duree debut_min dependances chevauchements\n";
+    else
+        fichier << "# id nom duree dependances\n";
+
+    // Trier les identifiants pour sauvegarde ordonnée
     vector<int> ids;
     ids.reserve(taches.size());
-    for(const auto &p : taches)
-    {
-        ids.push_back(p.first);
-    }
+    for (const auto& p : taches) ids.push_back(p.first);
     sort(ids.begin(), ids.end());
 
-    // Écriture dans l'ordre croissant
-    for(int id : ids)
-    {
-        const Tache &t = taches.at(id);
+    // Parcourir les tâches et écrire leurs infos
+    for (int id : ids) {
+        const Tache& t = taches.at(id);
+
+        // Format commun
         fichier << id << " " << t.nom << " " << t.duree << " ";
-        if(t.dependances.empty())
-        {
-            fichier << "-";
-        }
-        else
-        {
-            for(size_t i = 0; i < t.dependances.size(); ++i)
-            {
-                fichier << t.dependances[i];
-                if(i != t.dependances.size() - 1)
-                {
-                    fichier << " ";
+
+        if (formatP2) {
+            // --- FORMAT P2 (plus complet) ---
+            fichier << t.debut_min << " ";
+
+            // Dépendances
+            if (t.dependances.empty()) fichier << "- ";
+            else {
+                for (size_t i = 0; i < t.dependances.size(); ++i) {
+                    fichier << t.dependances[i];
+                    if (i != t.dependances.size() - 1) fichier << ",";
+                }
+                fichier << " ";
+            }
+
+            // Chevauchements
+            if (t.chevauchements.empty()) fichier << "-";
+            else {
+                for (size_t i = 0; i < t.chevauchements.size(); ++i) {
+                    fichier << t.chevauchements[i];
+                    if (i != t.chevauchements.size() - 1) fichier << ",";
+                }
+            }
+        } else {
+            // --- FORMAT P1 (ancien) ---
+            if (t.dependances.empty()) {
+                fichier << "-";
+            } else {
+                for (size_t i = 0; i < t.dependances.size(); ++i) {
+                    fichier << t.dependances[i];
+                    if (i != t.dependances.size() - 1) fichier << " ";
                 }
             }
         }
-        fichier << endl;
+
+        fichier << "\n";
     }
+
     fichier.close();
-    cout << "Graphe sauvegardé dans " << nomFichier << " (ordre croissant)" << endl;
+
+    cout << "✅ Graphe sauvegardé dans " << nomFichier 
+         << " (" << (formatP2 ? "format P2" : "format P1") << ")" << endl;
 }
+
 
 // --- Modifier le début d’une tâche ---
 void GrapheOrienté::modifierDebutTache(int id, int decalage)
