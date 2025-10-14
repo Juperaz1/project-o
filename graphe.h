@@ -26,7 +26,7 @@ struct Tache
     int marge = 0;
     bool critique = false;
     int retardManuel = 0; // Retard imposé manuellement à la tâche
-    vector<int> chevauchements; 
+    vector<int> chevauchements;
     int debut_min = 0;
 };
 
@@ -52,6 +52,8 @@ class GrapheOrienté
         void sauvegarder(const std::string& nomFichier) const;
         void ajouterTache(int id, const string &nom, int duree, int debut_min);
         void ajouterArc(int source, int destination);
+        void creerChevauchement(int id1, int id2);
+        void fixerDebutMin(int id, int jour);
         void afficher() const;
 
         // --- Vérification de cohérence ---

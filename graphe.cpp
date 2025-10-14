@@ -68,7 +68,7 @@ void GrapheOrienté::chargerDepuisFichier(const string &nomFichier)
 
         if (formatP2) {
             // Format attendu : id nom duree debut_min dependances chevauchements
-            // dépendances et chevauchements doivent être des tokens (ex: "1,2" ou "-")
+            // dépendances et chevauchements doivent être des tokens (ex: "1,2" ou "-" pour vide)
             if (!(iss >> id >> nom >> duree >> debut_min)) {
                 cerr << "Ligne ignorée (format P2 invalide) : " << ligne << "\n";
                 continue;
@@ -447,6 +447,53 @@ void GrapheOrienté::sauvegarder(const std::string& nomFichier) const
 
     cout << "✅ Graphe sauvegardé dans " << nomFichier 
          << " (" << (formatP2 ? "format P2" : "format P1") << ")" << endl;
+}
+
+void GrapheOrienté::creerChevauchement(int id1, int id2)
+{
+    Tache &t1 = taches[id1];
+    Tache &t2 = taches[id2];
+
+    bool chevauchementExistant1 = false;
+    for(size_t j = 0; j < t1.chevauchements.size(); j++)
+    {
+        if(t1.chevauchements[j] == id2)
+        {
+            chevauchementExistant1 = true;
+            break;
+        }
+    }
+    if(!chevauchementExistant1)
+    {
+        t1.chevauchements.push_back(id2);
+    }
+    bool chevauchementExistant2 = false;
+    for(size_t j = 0; j < t2.chevauchements.size(); j++)
+    {
+        if(t2.chevauchements[j] == id1)
+        {
+            chevauchementExistant2 = true;
+            break;
+        }
+    }
+    if(!chevauchementExistant2)
+    {
+        t2.chevauchements.push_back(id1);
+    }
+    cout << "Chevauchement créé entre Tâche " << id1 << " et Tâche " << id2 << "." << endl;
+}
+
+void GrapheOrienté::fixerDebutMin(int id, int jour)
+{
+    if(taches.find(id) != taches.end())
+    {
+        taches[id].debut_min = jour;
+        cout << "Début minimum de la tâche " << id << " fixé au jour " << jour << "." << endl;
+    }
+    else
+    {
+        cout << "Erreur : la tâche avec l'ID " << id << " n'existe pas." << endl;
+    }
 }
 
 

@@ -22,7 +22,6 @@ void creerDossier(const string &nomDossier)
     }
 }
 
-
 string choisirFichierSauvegarde()
 {
     string dossier = "../graphe";
@@ -34,10 +33,9 @@ string choisirFichierSauvegarde()
     // Construire le chemin complet avec extension
     string cheminComplet = dossier + "/" + nomFichier;
     if(cheminComplet.size() < 4 || cheminComplet.substr(cheminComplet.size() - 4) != ".txt")
-        {
-            cheminComplet += ".txt";
-        }
-
+    {
+        cheminComplet += ".txt";
+    }
     // Vérifier si le fichier existe
     if(fichierExiste(cheminComplet))
     {
@@ -59,11 +57,9 @@ int main(int argc, char *argv[])
     string nomFichier;
     cin >> nomFichier;
     GrapheOrienté projet;
-
     projet.chargerDepuisFichier(nomFichier);
     projet.afficher();
-
-    if (projet.estRealisable())
+    if(projet.estRealisable())
     {
         projet.calculerDates();
     }
@@ -71,16 +67,13 @@ int main(int argc, char *argv[])
     {
         cout << "  Projet non réalisable : cycle détecté.\n";
     }
-
     int menu = 1;
-
     while (menu == 1)
     {
-
         int valmenu;
-        cout << " 1. Décaler une tache \n 2. Sauvegarder le graphe dans un fichier \n 3. Charger un nouveau graphe (depuis un .txt) \n 4. Ajouter une dépendance \n 0. Quitter \n ";
+        cout << " 1. Décaler une tache \n 2. Sauvegarder le graphe dans un fichier \n 3. Charger un nouveau graphe (depuis un .txt) \n 4. Ajouter une contrainte \n 0. Quitter \n ";
         cin >> valmenu;
-        switch (valmenu)
+        switch(valmenu)
         {
         case 1:
         {
@@ -133,31 +126,71 @@ int main(int argc, char *argv[])
         }
         case 4:
         {
-            int source, destination;
-            cout << "\n=== Ajout d'une dépendance ===" << endl;
-            cout << "Entrez l'ID de la tâche source (précédente) : ";
-            cin >> source;
-            cout << "Entrez l'ID de la tâche destination (suivante) : ";
-            cin >> destination;
-            if(source == destination)
+            while(valmenu == 4)
             {
-                cout << "Erreur : une tâche ne peut pas dépendre d’elle-même.\n";
-            }
-            else
-            {
-                projet.ajouterArc(source, destination);
-                cout << "Dépendance ajoutée : Tâche " << destination << " dépend désormais de la tâche " << source << ".\n";
-                projet.afficher();
-                if(projet.estRealisable())
+                int choix;
+                cout << " 1. Ajouter une dépendance \n 2. Imposer une date minimum \n 3. Ajouter un chevauchement \n 0. Quitter \n ";
+                cin >> choix;
+                switch (choix)
+                {
+                    case 1:
                     {
-                        projet.calculerDates();
-                    }
-                else
+                        int source, destination;
+                        cout << "\n=== Ajout d'une contrainte ===" << endl;
+                        cout << "Entrez l'ID de la tâche source (précédente) : ";
+                        cin >> source;
+                        cout << "Entrez l'ID de la tâche destination (suivante) : ";
+                        cin >> destination;
+                        if(source == destination)
+                        {
+                            cout << "Erreur : une tâche ne peut pas dépendre d’elle-même.\n";
+                        }
+                        else
+                        {
+                            projet.ajouterArc(source, destination);
+                            cout << "Dépendance ajoutée : Tâche " << destination << " dépend désormais de la tâche " << source << ".\n";
+                            projet.afficher();
+                            if(projet.estRealisable())
+                            {
+                                projet.calculerDates();
+                            }
+                            else
+                            {
+                                cout << "Projet non réalisable après ajout de la dépendance (cycle détecté).\n";
+                            }
+                        }
+                    case 2:
                     {
-                        cout << "⚠️  Projet non réalisable après ajout (cycle détecté).\n";
+                        int id, jour;
+                        cout << "Entrez l'ID de la tâche à modifier : ";
+                        cin >> id;
+                        cout << "Entrez le jour minimum auquel la tâche peut commencer : ";
+                        cin >> jour;
+                        projet.fixerDebutMin(id, jour);
+                        break;
                     }
+                    case 3:
+                    {
+                        int id1, id2;
+                        cout << "Entrez l'ID de la première tâche : ";
+                        cin >> id1;
+                        cout << "Entrez l'ID de la deuxième tâche : ";
+                        cin >> id2;
+                        projet.creerChevauchement(id1, id2);
+                        break;
+                    }
+                    case 0:
+                    {
+                        valmenu = 0;
+                        break;
+                    }
+                    default:
+                    {
+                        cout << "Choix invalide\n";
+                    }
+                    }
+                }
             }
-            cout << endl;
             break;
         }
         case 0:
@@ -170,6 +203,5 @@ int main(int argc, char *argv[])
         }
         }
     }
-
     return 0;
 }
