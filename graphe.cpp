@@ -192,6 +192,27 @@ bool GrapheOrienté::estRealisable() const
     return true;
 }
 
+// --- Modifier une tâche ---
+void GrapheOrienté::modifierTache(int id, int nouvelleDuree, int decalageDuree)
+{
+    if (taches.find(id) == taches.end())
+    {
+        cout << "Tâche inexistante !\n";
+        return;
+    }
+
+    Tache &t = taches[id];
+    t.duree = nouvelleDuree;
+
+    calculerDates();
+
+    if (t.critique)
+        cout << "  Attention ! La tâche \"" << t.nom
+             << "\" est sur le chemin critique.\n";
+    else
+        cout << "Tâche modifiée : " << t.nom << "\n";
+}
+
 // --- Calcul du max des fins précédentes ---
 int GrapheOrienté::maxFinPrecedentes(const vector<int> &deps) const
 {
@@ -215,27 +236,6 @@ int GrapheOrienté::minDebutSuivantes(int id) const
     }
 
     return (min_debut == INT_MAX) ? taches.at(id).fin_tot : min_debut;
-}
-
-// --- Modifier une tâche ---
-void GrapheOrienté::modifierTache(int id, int nouvelleDuree, int decalageDuree)
-{
-    if (taches.find(id) == taches.end())
-    {
-        cout << "Tâche inexistante !\n";
-        return;
-    }
-
-    Tache &t = taches[id];
-    t.duree = nouvelleDuree;
-
-    calculerDates();
-
-    if (t.critique)
-        cout << "  Attention ! La tâche \"" << t.nom
-             << "\" est sur le chemin critique.\n";
-    else
-        cout << "Tâche modifiée : " << t.nom << "\n";
 }
 
 // --- Calcul des dates ---
@@ -340,10 +340,9 @@ void GrapheOrienté::calculerDates()
         cout << cheminCritique[i];
     }
     cout << std::endl;
-
+    
     /* Tâches avec marge */
     vector<int> Marge;
-
     for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
     {
         int id = it->first;
@@ -354,7 +353,6 @@ void GrapheOrienté::calculerDates()
             Marge.push_back(id);
         }
     }
-
     cout << "Tâche avec marge : ";
     for(size_t i = 0; i < Marge.size(); ++i)
     {

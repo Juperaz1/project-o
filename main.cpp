@@ -71,28 +71,11 @@ int main(int argc, char *argv[])
     while (menu == 1)
     {
         int valmenu;
-        cout << " 1. Décaler une tache \n 2. Sauvegarder le graphe dans un fichier \n 3. Charger un nouveau graphe (depuis un .txt) \n 4. Ajouter une contrainte \n 0. Quitter \n ";
+        cout << " 1. Sauvegarder le graphe dans un fichier \n 2. Charger un nouveau graphe (depuis un .txt) \n 3. Ajouter une contrainte \n 0. Quitter \n ";
         cin >> valmenu;
         switch(valmenu)
         {
         case 1:
-        {
-            int id, decalage;
-            cout << "\nEntrez l'ID de la tâche à décaler (0 pour quitter) : ";
-            cin >> id;
-
-            if (id == 0)
-            {
-                cout << " Opération annulée par l'utilisateur.\n";
-                return 0;
-            }
-
-            cout << "Entrez le nombre de jours de décalage (positif = retard, négatif = avancer) : ";
-            cin >> decalage;
-            projet.modifierDebutTache(id, decalage);
-            break;
-        }
-        case 2:
         {
             string fichier = choisirFichierSauvegarde();
             if(!fichier.empty())
@@ -107,7 +90,7 @@ int main(int argc, char *argv[])
             }
             break;
         }
-        case 3:
+        case 2:
         {
             cout << " Entrez un chemin d'un fichier TXT contenant un graphe dans le format correct : ";
             cin >> nomFichier;
@@ -124,12 +107,12 @@ int main(int argc, char *argv[])
             }
             break;
         }
-        case 4:
+        case 3:
         {
-            while(valmenu == 4)
+            while(valmenu == 3)
             {
                 int choix;
-                cout << " 1. Ajouter une dépendance \n 2. Imposer une date minimum \n 3. Ajouter un chevauchement \n 0. Quitter \n ";
+                cout << " 1. Ajouter une dépendance \n 2. Imposer une date minimum \n 3. Ajouter un chevauchement \n 4. Décaler une tâche \n 0. Quitter \n ";
                 cin >> choix;
                 switch (choix)
                 {
@@ -177,6 +160,22 @@ int main(int argc, char *argv[])
                         cout << "Entrez l'ID de la deuxième tâche : ";
                         cin >> id2;
                         projet.creerChevauchement(id1, id2);
+                        break;
+                    }
+                    case 4:
+                    {
+                        int id, decalage;
+                        cout << "\nEntrez l'ID de la tâche à décaler (0 pour quitter) : ";
+                        cin >> id;
+                        if(id == 0)
+                        {
+                            cout << " Opération annulée par l'utilisateur.\n";
+                            return 0;
+                        }
+
+                        cout << "Entrez le nombre de jours de décalage (positif = retard, négatif = avancer) : ";
+                        cin >> decalage;
+                        projet.modifierDebutTache(id, decalage);
                         break;
                     }
                     case 0:
