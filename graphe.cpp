@@ -32,8 +32,8 @@ void GrapheOrienté::chargerDepuisFichier(const string &nomFichier)
         return;
     }
 
+    formatP2 = false;
     string ligne;
-    bool formatP2 = false;
 
     // --- Détection du format (cherche "debut_min" dans l'en-tête si présent) ---
     streampos posDebut = fichier.tellg();
@@ -246,77 +246,209 @@ void GrapheOrienté::calculerDates()
         cout << " Projet non réalisable (cycle détecté)\n";
         return;
     }
-
-    vector<int> ordre;
-    for (const pair<const int, Tache> &element : taches)
-        ordre.push_back(element.first);
-    sort(ordre.begin(), ordre.end());
-
-    for (int id : ordre)
+    if(formatP2)
     {
-        Tache &t = taches[id];
-        t.debut_tot = maxFinPrecedentes(t.dependances) + t.retardManuel;
-        t.fin_tot = t.debut_tot + t.duree;
-    }
+        const int N = taches.size();
+        vector<int> ordre;
+        for (map<int, Tache>::const_iterator it = taches.begin(); it != taches.end(); ++it)
+            ordre.push_back(it->first);
+        sort(ordre.begin(), ordre.end());
 
-    int fin_projet = 0;
-    for (int id : ordre)
-        fin_projet = max(fin_projet, taches[id].fin_tot);
 
-    for (int id : ordre)
-    {
-        Tache &t = taches[id];
-        t.fin_tard = fin_projet;
-        t.debut_tard = fin_projet - t.duree;
-    }
-
-    for (vector<int>::reverse_iterator it = ordre.rbegin(); it != ordre.rend(); ++it)
-    {
-        int id = *it;
-        Tache &t = taches[id];
-        t.fin_tard = minDebutSuivantes(id);
-        t.debut_tard = t.fin_tard - t.duree;
-    }
-
-    for (pair<const int, Tache> &element : taches)
-    {
-        Tache &t = element.second;
-        t.marge = t.debut_tard - t.debut_tot;
-        t.critique = (t.marge == 0);
-    }
-
-    cout << "\nID | Tâche        | Durée | Début_min | Début+Tôt | Début+Tard | Marge | Critique | Chevauchements\n";
-    cout << "----------------------------------------------------------------------------------------------------\n";
-    for (int id : ordre)
-    {
-        const Tache &t = taches.at(id);
-
-        cout << setw(2) << id << " | "
-             << left << setw(12) << t.nom << " | "
-             << setw(5) << t.duree << " | "
-             << setw(10) << t.debut_min << " | "
-             << setw(10) << t.debut_tot << " | "
-             << setw(11) << t.debut_tard << " | "
-             << setw(5) << t.marge << " | "
-             << (t.critique ? "*" : " ") << " | ";
-
-        // Affichage des chevauchements
-        if (t.chevauchements.empty())
-            cout << "-";
-        else
+        map<int, int> debut_tot;
+        map<int, int> fin_tard;
+        for(map<int, Tache>::const_iterator it = taches.begin(); it != taches.end(); ++it)
         {
-            for (size_t i = 0; i < t.chevauchements.size(); ++i)
+            debut_tot[it->first] = 0;
+            fin_tard[it->first] = INT_MAX;
+        }
+
+
+        for(int k = 0; k < N - 1; ++k)
+        {
+            for(map<int, Tache>::const_iterator it = taches.begin(); it != taches.end(); ++it)
             {
-                cout << t.chevauchements[i];
-                if (i != t.chevauchements.size() - 1)
-                    cout << ",";
+                int id = it->first;
+                const Tache &t = it->second;
+                for(size_t i = 0; i < t.dependances.size(); ++i)
+                {
+                    int dep = t.dependances[i];
+                    int possible_debut = debut_tot[dep] + taches.at(dep).duree + taches.at(dep).retardManuel;
+                    if(possible_debut > debut_tot[id])
+                    {
+                        debut_tot[id] = possible_debut;
+                    }
+                }
             }
         }
 
-        cout << "\n";
-    }
-    cout << "----------------------------------------------------------------------------------------------------\n";
 
+        for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
+        {
+            int id = it->first;
+            Tache &t = it->second;
+            t.debut_tot = debut_tot[id];
+            t.fin_tot = t.debut_tot + t.duree;
+        }
+
+
+        int fin_projet = 0;
+        for(map<int, Tache>::const_iterator it = taches.begin(); it != taches.end(); ++it)
+        {
+            if(it->second.fin_tot > fin_projet)
+            {
+                fin_projet = it->second.fin_tot;
+            }
+        }
+
+
+        for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
+        {
+            fin_tard[it->first] = fin_projet;
+        }
+
+
+        for(int k = 0; k < N - 1; ++k)
+        {
+            for(map<int, Tache>::const_iterator it = taches.begin(); it != taches.end(); ++it)
+            {
+                int id = it->first;
+                const Tache &t = it->second;
+                for(size_t i = 0; i < t.dependances.size(); ++i)
+                {
+                    int dep = t.dependances[i];
+                    int possible_fin = fin_tard[id] - t.duree;
+                    if(possible_fin < fin_tard[dep])
+                    {
+                        fin_tard[dep] = possible_fin;
+                    }
+                }
+            }
+        }
+
+
+        for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
+        {
+            int id = it->first;
+            Tache &t = it->second;
+            t.fin_tard = fin_tard[id];
+            t.debut_tard = t.fin_tard - t.duree;
+        }
+
+
+        for (map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
+        {
+            Tache &t = it->second;
+            t.marge = t.debut_tard - t.debut_tot;
+            t.critique = (t.marge == 0);
+        }
+
+
+        cout << "\nID | Tâche        | Durée | Début_min | Début+Tôt | Début+Tard | Marge | Critique | Chevauchements\n";
+        cout << "----------------------------------------------------------------------------------------------------\n";
+        for (size_t i = 0; i < ordre.size(); ++i)
+        {
+            int id = ordre[i];
+            const Tache &t = taches.at(id);
+            cout << setw(2) << id << " | "
+                << left << setw(12) << t.nom << " | "
+                << setw(5) << t.duree << " | "
+                << setw(10) << t.debut_min << " | "
+                << setw(10) << t.debut_tot << " | "
+                << setw(11) << t.debut_tard << " | "
+                << setw(5) << t.marge << " | "
+                << (t.critique ? "*" : " ") << " | ";
+            if(t.chevauchements.empty())
+            {
+                cout << "-";
+            }
+            else
+            {
+                for(size_t j = 0; j < t.chevauchements.size(); ++j)
+                {
+                    cout << t.chevauchements[j];
+                    if(j != t.chevauchements.size() - 1)
+                    {
+                        cout << ",";
+                    }
+                }
+            }
+            cout << "\n";
+        }
+        cout << "----------------------------------------------------------------------------------------------------\n";
+    }
+    else
+    {
+        vector<int> ordre;
+        for (const pair<const int, Tache> &element : taches)
+            ordre.push_back(element.first);
+        sort(ordre.begin(), ordre.end());
+
+        for (int id : ordre)
+        {
+            Tache &t = taches[id];
+            t.debut_tot = maxFinPrecedentes(t.dependances) + t.retardManuel;
+            t.fin_tot = t.debut_tot + t.duree;
+        }
+
+        int fin_projet = 0;
+        for (int id : ordre)
+            fin_projet = max(fin_projet, taches[id].fin_tot);
+
+        for (int id : ordre)
+        {
+            Tache &t = taches[id];
+            t.fin_tard = fin_projet;
+            t.debut_tard = fin_projet - t.duree;
+        }
+
+        for (vector<int>::reverse_iterator it = ordre.rbegin(); it != ordre.rend(); ++it)
+        {
+            int id = *it;
+            Tache &t = taches[id];
+            t.fin_tard = minDebutSuivantes(id);
+            t.debut_tard = t.fin_tard - t.duree;
+        }
+
+        for (pair<const int, Tache> &element : taches)
+        {
+            Tache &t = element.second;
+            t.marge = t.debut_tard - t.debut_tot;
+            t.critique = (t.marge == 0);
+        }
+
+        cout << "\nID | Tâche        | Durée | Début_min | Début+Tôt | Début+Tard | Marge | Critique | Chevauchements\n";
+        cout << "----------------------------------------------------------------------------------------------------\n";
+        for (int id : ordre)
+        {
+            const Tache &t = taches.at(id);
+
+            cout << setw(2) << id << " | "
+                << left << setw(12) << t.nom << " | "
+                << setw(5) << t.duree << " | "
+                << setw(10) << t.debut_min << " | "
+                << setw(10) << t.debut_tot << " | "
+                << setw(11) << t.debut_tard << " | "
+                << setw(5) << t.marge << " | "
+                << (t.critique ? "*" : " ") << " | ";
+
+            // Affichage des chevauchements
+            if (t.chevauchements.empty())
+                cout << "-";
+            else
+            {
+                for (size_t i = 0; i < t.chevauchements.size(); ++i)
+                {
+                    cout << t.chevauchements[i];
+                    if (i != t.chevauchements.size() - 1)
+                        cout << ",";
+                }
+            }
+
+            cout << "\n";
+        }
+        cout << "----------------------------------------------------------------------------------------------------\n"; 
+    }
     /* Chemin critique */
     vector<int> cheminCritique;
     for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
@@ -340,7 +472,7 @@ void GrapheOrienté::calculerDates()
         cout << cheminCritique[i];
     }
     cout << std::endl;
-    
+
     /* Tâches avec marge */
     vector<int> Marge;
     for(map<int, Tache>::iterator it = taches.begin(); it != taches.end(); ++it)
@@ -365,6 +497,12 @@ void GrapheOrienté::calculerDates()
         }
     }
     cout << std::endl;
+    int fin_projet = 0;
+    for (std::map<int, Tache>::const_iterator it = taches.begin(); it != taches.end(); ++it)
+    {
+        const Tache &t = it->second;
+        fin_projet = std::max(fin_projet, t.fin_tot);
+    }
     cout << "Durée minimale du projet : " << fin_projet << " jours" << endl << endl;
 }
 

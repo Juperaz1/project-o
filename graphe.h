@@ -41,6 +41,7 @@ class GrapheOrienté
         bool DetectCycle(int id, unordered_map<int, int> &etat) const;
         int maxFinPrecedentes(const vector<int> &deps) const;
         int minDebutSuivantes(int id) const;
+        bool formatP2 = false;
 
     public:
         // --- Constructeurs / Destructeurs ---
